@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Product_Category {
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  category_name      String
+  parent_category_id String?            @db.ObjectId
+  category_parent    Product_Category?  @relation("CategoryProduct", fields: [parent_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  category_item      Product_Category[] @relation("CategoryProduct")
+  product            Product[]
+  variation          variation[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Product {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  category_id   String?           @db.ObjectId
+  category      Product_Category? @relation(fields: [category_id], references: [id])
+  name          String            @unique
+  description   String
+  product_image String
+  item          Product_item[]
+}
+
+model Product_item {
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  product_id    String?            @db.ObjectId
+  product       Product?           @relation(fields: [product_id], references: [id])
+  SKU           String             @unique
+  qty_in_stock  Int
+  product_image String
+  price         Int
+  option_id     String[]           @db.ObjectId
+  option        variation_option[] @relation(fields: [option_id], references: [id])
+}
+
+model variation {
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
+  category_id String             @db.ObjectId
+  category    Product_Category   @relation(fields: [category_id], references: [id])
+  name        String?
+  option      variation_option[]
+}
+
+model variation_option {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  variation_id    String?        @db.ObjectId
+  variation       variation?     @relation(fields: [variation_id], references: [id])
+  value           String
+  product_item_id String[]       @db.ObjectId
+  product_item    Product_item[] @relation(fields: [product_item_id], references: [id])
+}
